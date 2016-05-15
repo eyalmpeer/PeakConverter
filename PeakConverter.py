@@ -194,13 +194,14 @@ def gen2tr(bedfile, tx_dict):
     print("---Building temporary conversion BED file...", end=" ")
     with tempfile.NamedTemporaryFile(mode='w', delete=False) as temp_bed_key:
         for tx_class in tx_dict:
-            for tx in tx_dict[tx_class]:
-                for exon_start, exon_end, tr_exon_st, tr_exon_end in \
-                    zip(tx.genomic_starts, tx.genomic_ends,
-                        tx.trans_starts, tx.trans_ends):
-                    print(tx.chrom, exon_start, exon_end, "*", "*",
-                          tx.strand, tx.uid, tr_exon_st, tr_exon_end,
-                          sep="\t", file=temp_bed_key)
+            if len(tx_dict[tx_class]) == 1:  # Check that this is an isoform without duplicates
+                for tx in tx_dict[tx_class]:
+                    for exon_start, exon_end, tr_exon_st, tr_exon_end in \
+                        zip(tx.genomic_starts, tx.genomic_ends,
+                            tx.trans_starts, tx.trans_ends):
+                        print(tx.chrom, exon_start, exon_end, "*", "*",
+                              tx.strand, tx.uid, tr_exon_st, tr_exon_end,
+                              sep="\t", file=temp_bed_key)
         temp_bed_key.seek(0)
         print("Done!")
         print("---Intersecting BED files...", end=" ")
@@ -422,7 +423,7 @@ if __name__ == "__main__":
     tb_array = read_table_into_array(args.tablefile, chosen)
     print("Done!")
     print("Building transcriptome...", end=" ")
-    tx_dict = build_transcriptome(tb_array, 'gid')
+    tx_dict = build_transcriptome(tb_array, 'txid')
     print("Done!")
     print("Fetching transcriptomic parameters for metagene analysis...", end=" ")
     parameters_df = get_parameters(tx_dict)
@@ -435,6 +436,7 @@ if __name__ == "__main__":
     merged = merged[['Tx_ID', 'Peak_Start', 'Peak_End', 'Peak_Names',
                      'Peak_Middle', 'ATG', 'Stop', 'Length', 'FirstSpliceSite',
                      'LastSpliceSite']]
+    merged = merged[(merged.Peak_End - merged.Peak_Start) > 50]
     merged.sort_values(['Tx_ID', 'Peak_Start'], ascending=[True, True],
                        inplace=True)
     print("Done converting genomic to transcriptomic coordinates!")
