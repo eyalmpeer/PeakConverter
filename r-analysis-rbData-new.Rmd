@@ -1,0 +1,108 @@
+---
+title: "Analysis of Retinoblastoma Review Data"
+output: html_notebook
+---
+
+Loading libraries.
+
+```{r}
+library(tidyverse)
+library(Hmisc)
+```
+
+Loading data from CSV.
+
+```{r}
+rbData<-read_csv('source_data_trimmed_updated_withSymptoms.csv')
+```
+Average age + std + cohort size per country:
+
+```{r}
+# avg + std + cohort size for ages per economic group:
+rbData %>% group_by(country) %>% 
+  filter(economicGrouping != "NA") %>% 
+  summarise(meanAgeAll = weighted.mean(ageAvgAll, cohortSizeAll, na.rm = TRUE), 
+            cohortAgeAll = sum(cohortSizeAll, na.rm = TRUE), 
+            meanAgeUni = weighted.mean(ageAvgUni, cohortSizeUni, na.rm = TRUE), 
+            cohortAgeUni = sum(cohortSizeUni, na.rm = TRUE), 
+            meanAgeBi = weighted.mean(ageAvgBi, cohortSizeBi, na.rm = TRUE), 
+            cohortAgeBi = sum(cohortSizeBi, na.rm = TRUE))
+```
+
+Average age + std + cohort size for all cohort:
+
+```{r}
+rbData %>% 
+  summarise(meanAgeAll = weighted.mean(ageAvgAll, cohortSizeAll, na.rm = TRUE), 
+            stdAgeAll = sqrt(wtd.var(ageAvgAll, cohortSizeAll, na.rm = TRUE)), 
+            cohortAgeAll = sum(cohortSizeAll, na.rm = TRUE), 
+            meanAgeUni = weighted.mean(ageAvgUni, cohortSizeUni, na.rm = TRUE), 
+            stdAgeUni = sqrt(wtd.var(ageAvgUni, cohortSizeUni, na.rm = TRUE)), 
+            cohortAgeUni = sum(cohortSizeUni, na.rm = TRUE), 
+            meanAgeBi = weighted.mean(ageAvgBi, cohortSizeBi, na.rm = TRUE), 
+            stdAgeBi = sqrt(wtd.var(ageAvgBi, cohortSizeBi, na.rm = TRUE)), 
+            cohortAgeBi = sum(cohortSizeBi, na.rm = TRUE))
+```
+
+male % per country and for all cohort, with cohorts:
+
+```{r}
+rbData %>% group_by(country) %>% summarise(males = sum(maleAll, na.rm=TRUE)/(sum(maleAll, na.rm=TRUE)+sum(femaleAll, na.rm=TRUE)), cohort = sum(maleAll, na.rm=TRUE)+sum(femaleAll, na.rm=TRUE)) %>% print(n=40)
+rbData %>% summarise(males = sum(maleAll, na.rm=TRUE)/(sum(maleAll, na.rm=TRUE)+sum(femaleAll, na.rm=TRUE)), cohort = sum(maleAll, na.rm=TRUE)+sum(femaleAll, na.rm=TRUE)) %>% print(n=40)
+```
+
+calculate per country and total familial + cohort:
+
+```{r}
+rbData %>% group_by(country) %>% summarise(familial = sum(familial, na.rm=TRUE)/sum(familialCohort, na.rm=TRUE), cohort = sum(familialCohort, na.rm=TRUE)) %>% print(n=40)
+rbData %>% summarise(familial = sum(familial, na.rm=TRUE)/sum(familialCohort, na.rm=TRUE), cohort = sum(familialCohort, na.rm=TRUE)) %>% print(n=40)
+```
+
+number of studies per country and total:
+```{r}
+rbData %>% group_by(country) %>% summarise(studies = n_distinct(article_id)) %>% print(n=40)
+rbData %>% summarise(studies = n_distinct(article_id)) %>% print(n=40)
+```
+
+total cohort and per country:
+```{r}
+rbData %>% group_by(country) %>% summarise(cohort = sum(cohortSizeTotal, na.rm=TRUE)) %>% print(n=40)
+rbData %>% summarise(cohort = sum(cohortSizeTotal, na.rm=TRUE)) %>% print(n=40)
+```
+
+unilateral per country and total:
+```{r}
+rbData %>% group_by(country) %>% summarise(uni = sum(unilateral, na.rm=TRUE)/(sum(unilateral, na.rm=TRUE)+sum(bilateral, na.rm=TRUE)), cohort = (sum(unilateral, na.rm=TRUE)+sum(bilateral, na.rm=TRUE))) %>% print(n=30)
+rbData %>% summarise(uni = sum(unilateral, na.rm=TRUE)/(sum(unilateral, na.rm=TRUE)+sum(bilateral, na.rm=TRUE)), cohort = (sum(unilateral, na.rm=TRUE)+sum(bilateral, na.rm=TRUE))) %>% print(n=30)
+```
+
+intraocular per country and total:
+```{r}
+rbData %>% group_by(country) %>% summarise(intra = sum(intraocular, na.rm=TRUE)/(sum(intraocular, na.rm=TRUE)+sum(extraocular, na.rm=TRUE)), cohort = (sum(intraocular, na.rm=TRUE)+sum(extraocular, na.rm=TRUE))) %>% print(n=30)
+rbData %>% summarise(intra = sum(intraocular, na.rm=TRUE)/(sum(intraocular, na.rm=TRUE)+sum(extraocular, na.rm=TRUE)), cohort = (sum(intraocular, na.rm=TRUE)+sum(extraocular, na.rm=TRUE))) %>% print(n=30)
+```
+
+
+iv chemo and ebr per country and total:
+```{r}
+rbData %>% group_by(country) %>% summarise(chemo = sum(chemotherapy, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(chemotherapy)], na.rm=TRUE), cohort = sum(cohortSizeTotal[!is.na(chemotherapy)], na.rm=TRUE)) %>% print(n=30)
+rbData %>% summarise(chemo = sum(chemotherapy, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(chemotherapy)], na.rm=TRUE), cohort = sum(cohortSizeTotal[!is.na(chemotherapy)], na.rm=TRUE)) %>% print(n=30)
+rbData %>% group_by(country) %>% summarise(ebr = sum(externalBeamRad, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(externalBeamRad)], na.rm=TRUE), cohort = sum(cohortSizeTotal[!is.na(externalBeamRad)], na.rm=TRUE)) %>% print(n=30)
+rbData %>% summarise(ebr = sum(externalBeamRad, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(externalBeamRad)], na.rm=TRUE), cohort = sum(cohortSizeTotal[!is.na(externalBeamRad)], na.rm=TRUE)) %>% print(n=30)
+```
+
+
+enucleation per country and total:
+```{r}
+rbData %>% group_by(country) %>% summarise(primary = sum(primaryEnucleation, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(primaryEnucleation)], na.rm=TRUE), cohortPrimary = sum(cohortSizeTotal[!is.na(primaryEnucleation)], na.rm=TRUE), secondary = sum(secondaryEnucleation, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(secondaryEnucleation)], na.rm=TRUE), cohortSecondary = sum(cohortSizeTotal[!is.na(secondaryEnucleation)], na.rm=TRUE)) %>% print(n=30)
+rbData %>% summarise(primary = sum(primaryEnucleation, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(primaryEnucleation)], na.rm=TRUE), cohortPrimary = sum(cohortSizeTotal[!is.na(primaryEnucleation)], na.rm=TRUE), secondary = sum(secondaryEnucleation, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(secondaryEnucleation)], na.rm=TRUE), cohortSecondary = sum(cohortSizeTotal[!is.na(secondaryEnucleation)], na.rm=TRUE)) %>% print(n=30)
+```
+
+
+lost to follow up per counrty and total:
+```{r}
+rbData %>% group_by(country) %>% summarise(ltf = sum(lostFollowup, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(lostFollowup)], na.rm=TRUE), cohort = sum(cohortSizeTotal[!is.na(lostFollowup)], na.rm=TRUE)) %>% print(n=30)
+rbData %>% summarise(ltf = sum(lostFollowup, na.rm=TRUE) / sum(cohortSizeTotal[!is.na(lostFollowup)], na.rm=TRUE), cohort = sum(cohortSizeTotal[!is.na(lostFollowup)], na.rm=TRUE)) %>% print(n=30)
+```
+
+
